@@ -371,7 +371,7 @@ export default function Projects() {
                 </div>
 
                 <div className="mt-8 flex gap-4">
-                  <MagneticElement as="link" strength={40} href={selectedProject.demoUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-500 hover:underline" >
+                  <MagneticElement as="a" strength={40} href={selectedProject.demoUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-500 hover:underline" >
                     <ExternalLink className="h-4 w-4" />
                     View Project
                   </MagneticElement>
