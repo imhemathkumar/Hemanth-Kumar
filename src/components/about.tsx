@@ -144,7 +144,7 @@ const aboutContent = {
                   <div className="mt-6">
                     <MagneticElement strength={30} as="div">
                       <Button className="bg-primary hover:bg-primary/90" asChild>
-                        <a href="#" download>
+                        <a href="/resume.pdf" download>
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             width="24"
