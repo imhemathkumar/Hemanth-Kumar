@@ -31,7 +31,7 @@ interface Project {
   extraTechCount?: number
   demoUrl: string
   githubUrl: string
-  category: string
+  category: string[] | string
 }
 
 export default function Projects() {
@@ -83,7 +83,7 @@ export default function Projects() {
         { name: "Deep Learning" },
         { name: "Medical Imaging" }
       ],
-      demoUrl: "#",
+      demoUrl: "https://github.com/imhemathkumar/Brain_tumor_classification",
       githubUrl: "https://github.com/imhemathkumar/Brain_tumor_classification",
       category: "ai"
     },
@@ -106,7 +106,7 @@ export default function Projects() {
         { name: "API Integration" }
       ],
       demoUrl: "https://nimbusvue.vercel.app/",
-      githubUrl: "#",
+      githubUrl: "https://github.com/imhemathkumar/Weather-app--Nimbus-Vue-",
       category: "frontend",
     },
     {
@@ -125,7 +125,7 @@ export default function Projects() {
         { name: "CNN" },
         { name: "Computer Vision" }
       ],
-      demoUrl: "#",
+      demoUrl: "https://github.com/imhemathkumar/Fashion-Mnist-CNN",
       githubUrl: "https://github.com/imhemathkumar/Fashion-Mnist-CNN",
       category: "ai",
     },
@@ -146,9 +146,10 @@ export default function Projects() {
         { name: "JavaScript" },
         { name: "Cryptography" }
       ],
-      demoUrl: "https://example.com/trustcert",
-      githubUrl: "#",
-      category: "security",
+      demoUrl: "https://github.com/imhemathkumar/TrustCert",
+      githubUrl: "https://github.com/imhemathkumar/TrustCert",
+      category: ["security", "blockchain"],
+
     },
     {
       id: "selinux-policy",
@@ -167,7 +168,7 @@ export default function Projects() {
         { name: "policycoreutils" },
         { name: "policycoreutils-python-utils" }
       ],
-      demoUrl: "#",
+      demoUrl: "https://github.com/imhemathkumar/SELinux-policies",
       githubUrl: "https://github.com/imhemathkumar/SELinux-policies",
       category: "security",
     },
@@ -187,7 +188,7 @@ export default function Projects() {
         { name: "JavaScript" }
       ],
       demoUrl: "https://todolist-hemanth.vercel.app/",
-      githubUrl: "#",
+      githubUrl: "https://github.com/imhemathkumar/To-Do-List",
       category: "frontend",
     },
     {
@@ -209,12 +210,17 @@ export default function Projects() {
         { name: "Framer Motion" }
       ],
       demoUrl: "https://hemanthkumar-one.vercel.app/",
-      githubUrl: "#",
+      githubUrl: "https://github.com/imhemathkumar/Hemanth-Kumar",
       category: "frontend",
     },
   ]
 
-  const filteredProjects = filter === "all" ? projects : projects.filter(p => p.category === filter)
+  const filteredProjects = filter === "all" 
+  ? projects 
+  : projects.filter(p => Array.isArray(p.category) 
+      ? p.category.includes(filter) 
+      : p.category === filter)
+
 
   const containerVariants = {
     hidden: { opacity: 0 },
