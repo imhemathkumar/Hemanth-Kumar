@@ -14,11 +14,6 @@ export default function LoadingScreen() {
   const [shouldExit, setShouldExit] = useState(false)
 
   useEffect(() => {
-    // Set a timeout to ensure loading screen doesn't get stuck
-    const maxLoadingTime = setTimeout(() => {
-      setIsLoading(false)
-    }, 5000) // Force exit after 5 seconds max
-
     const interval = setInterval(() => {
       setProgress((prev) => {
         const newProgress = prev + Math.random() * 10
@@ -26,10 +21,7 @@ export default function LoadingScreen() {
       })
     }, 150)
 
-    return () => {
-      clearInterval(interval)
-      clearTimeout(maxLoadingTime)
-    }
+    return () => clearInterval(interval)
   }, [])
 
   useEffect(() => {
@@ -49,11 +41,7 @@ export default function LoadingScreen() {
         setShouldExit(true)
         setTimeout(() => {
           setIsLoading(false)
-          try {
-            window.dispatchEvent(new CustomEvent("loadingComplete"))
-          } catch (e) {
-            console.error("Error dispatching loadingComplete event:", e)
-          }
+          window.dispatchEvent(new CustomEvent("loadingComplete"))
         }, 1000)
       }, 800)
 
@@ -62,19 +50,10 @@ export default function LoadingScreen() {
   }, [progress, typingComplete])
 
   useEffect(() => {
-    try {
-      setWindowSize({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      })
-    } catch (e) {
-      console.error("Error accessing window dimensions:", e)
-      // Set fallback dimensions
-      setWindowSize({
-        width: 1200,
-        height: 800,
-      })
-    }
+    setWindowSize({
+      width: window.innerWidth,
+      height: window.innerHeight,
+    })
   }, [])
 
   return (
@@ -128,7 +107,11 @@ export default function LoadingScreen() {
           >
             <motion.div
               className="text-center pointer-events-none"
-              animate={shouldExit ? { scale: 1.1, opacity: 0, y: -20 } : { scale: 1, opacity: 1, y: 0 }}
+              animate={
+                shouldExit
+                  ? { scale: 1.1, opacity: 0, y: -20 }
+                  : { scale: 1, opacity: 1, y: 0 }
+              }
               transition={{
                 duration: 0.8,
                 ease: "easeInOut",
@@ -177,10 +160,10 @@ export default function LoadingScreen() {
               </motion.p>
             </motion.div>
 
-            {/* Background floating circles - simplified for performance */}
+            {/* Background floating circles */}
             <div className="absolute inset-0 -z-10 overflow-hidden">
               {windowSize.width > 0 &&
-                [...Array(3)].map((_, i) => (
+                [...Array(5)].map((_, i) => (
                   <motion.div
                     key={i}
                     className="absolute rounded-full bg-primary/5"
@@ -195,7 +178,7 @@ export default function LoadingScreen() {
                         : {
                             x: Math.random() * windowSize.width,
                             y: Math.random() * windowSize.height,
-                            scale: Math.random() * 2 + 1,
+                            scale: Math.random() * 3 + 1,
                           }
                     }
                     transition={{
@@ -203,8 +186,8 @@ export default function LoadingScreen() {
                       ease: "easeInOut",
                     }}
                     style={{
-                      width: `${Math.random() * 150 + 50}px`,
-                      height: `${Math.random() * 150 + 50}px`,
+                      width: `${Math.random() * 200 + 50}px`,
+                      height: `${Math.random() * 200 + 50}px`,
                     }}
                   />
                 ))}
