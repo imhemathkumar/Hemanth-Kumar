@@ -11,48 +11,34 @@ export default function HolographicBackground() {
 
   // Effect for mouse movement interaction
   useEffect(() => {
-    try {
-      const container = containerRef.current
-      if (!container) return
+    const container = containerRef.current
+    if (!container) return
 
-      const handleMouseMove = (e: MouseEvent) => {
-        try {
-          const { clientX, clientY } = e
+    const handleMouseMove = (e: MouseEvent) => {
+      const { clientX, clientY } = e
 
-          // Calculate position with amplified movement
-          const amplifier = 1.2
-          const centerX = window.innerWidth / 2
-          const centerY = window.innerHeight / 2
+      // Calculate position with amplified movement
+      const amplifier = 1.2
+      const centerX = window.innerWidth / 2
+      const centerY = window.innerHeight / 2
 
-          // Calculate distance from center and amplify
-          const distanceX = (clientX - centerX) * amplifier
-          const distanceY = (clientY - centerY) * amplifier
+      // Calculate distance from center and amplify
+      const distanceX = (clientX - centerX) * amplifier
+      const distanceY = (clientY - centerY) * amplifier
 
-          // Calculate new position with amplified movement
-          const newX = Math.min(Math.max(((centerX + distanceX) / window.innerWidth) * 100, 0), 100)
-          const newY = Math.min(Math.max(((centerY + distanceY) / window.innerHeight) * 100, 0), 100)
+      // Calculate new position with amplified movement
+      const newX = Math.min(Math.max(((centerX + distanceX) / window.innerWidth) * 100, 0), 100)
+      const newY = Math.min(Math.max(((centerY + distanceY) / window.innerHeight) * 100, 0), 100)
 
-          // Update CSS variables for gradient movement
-          container.style.setProperty("--mouse-x", `${newX}%`)
-          container.style.setProperty("--mouse-y", `${newY}%`)
-        } catch (error) {
-          console.error("Error in mouse move handler:", error)
-        }
-      }
+      // Update CSS variables for gradient movement
+      container.style.setProperty("--mouse-x", `${newX}%`)
+      container.style.setProperty("--mouse-y", `${newY}%`)
+    }
 
-      try {
-        window.addEventListener("mousemove", handleMouseMove)
+    window.addEventListener("mousemove", handleMouseMove)
 
-        return () => {
-          window.removeEventListener("mousemove", handleMouseMove)
-        }
-      } catch (error) {
-        console.error("Error setting up mouse move listener:", error)
-        return () => {}
-      }
-    } catch (error) {
-      console.error("Error in holographic background effect:", error)
-      return () => {}
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove)
     }
   }, [])
 
