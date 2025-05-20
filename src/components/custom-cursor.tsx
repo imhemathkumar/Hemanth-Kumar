@@ -6,14 +6,7 @@ import { useCursor } from "@/context/cursor-context"
 import { useTheme } from "next-themes"
 
 export default function CustomCursor() {
-  const {
-    cursorType,
-    isHovering,
-    isInverted,
-    magneticTarget,
-    isClicking,
-    hoveredElementDimensions,
-  } = useCursor()
+  const { cursorType, isHovering, isInverted, magneticTarget, isClicking, hoveredElementDimensions } = useCursor()
 
   const mousePositionRef = useRef({ x: 0, y: 0 })
   const [renderPosition, setRenderPosition] = useState({ x: 0, y: 0 })
@@ -36,16 +29,30 @@ export default function CustomCursor() {
 
   useEffect(() => {
     const checkTouch = () => {
-      const isTouchCapable =
-        "ontouchstart" in window ||
-        navigator.maxTouchPoints > 0 ||
-        window.matchMedia("(hover: none)").matches
-      setIsTouchDevice(isTouchCapable)
+      try {
+        const isTouchCapable =
+          "ontouchstart" in window || navigator.maxTouchPoints > 0 || window.matchMedia("(hover: none)").matches
+        setIsTouchDevice(isTouchCapable)
+      } catch (error) {
+        console.error("Error checking touch capability:", error)
+        // Default to true on error to disable cursor on problematic devices
+        setIsTouchDevice(true)
+      }
     }
 
-    checkTouch()
-    window.addEventListener("resize", checkTouch)
-    return () => window.removeEventListener("resize", checkTouch)
+    // Set isTouchDevice to true initially until we can verify
+    setIsTouchDevice(true)
+
+    // Only run the check if window is defined (client-side)
+    if (typeof window !== "undefined") {
+      try {
+        checkTouch()
+        window.addEventListener("resize", checkTouch)
+        return () => window.removeEventListener("resize", checkTouch)
+      } catch (error) {
+        console.error("Error setting up touch detection:", error)
+      }
+    }
   }, [])
 
   useEffect(() => {
@@ -89,8 +96,7 @@ export default function CustomCursor() {
 
   useEffect(() => {
     if (isHovering && hoveredElementDimensions) {
-      const { width: elementWidth, height: elementHeight, borderRadius: elementBorderRadius } =
-        hoveredElementDimensions
+      const { width: elementWidth, height: elementHeight, borderRadius: elementBorderRadius } = hoveredElementDimensions
 
       width.set(elementWidth + 4)
       height.set(elementHeight + 4)
@@ -168,9 +174,11 @@ export default function CustomCursor() {
     }
   }, [isTouchDevice])
 
+  // Early return for touch devices
   if (isTouchDevice) return null
 
-  const dotSize = Math.max(2, Math.min(window.innerWidth / 640, 4))
+  // Safely calculate dot size with fallbacks
+  const dotSize = typeof window !== "undefined" ? Math.max(2, Math.min((window.innerWidth || 320) / 640, 4)) : 3
 
   return (
     <>
