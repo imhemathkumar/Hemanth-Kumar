@@ -25,7 +25,7 @@ export default function Header({ setSidebarVisible }: { setSidebarVisible: (visi
       }`}
     >
       <div className="md:container lg:container mx-auto px-4 py-3 flex items-center justify-between">
-        <MagneticElement as="link" href="/" className="flex items-center gap-2">
+        <MagneticElement as="a" href="/" className="flex items-center gap-2">
           <span className="font-bold text-xl">Hemanth Kumar</span>
         </MagneticElement>
 
