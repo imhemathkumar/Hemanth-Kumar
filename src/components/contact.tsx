@@ -183,7 +183,7 @@ export default function Contact() {
                       <div className="flex space-x-6">
                         <MagneticElement as="div" strength={40}>
                           <a
-                            href="#"
+                            href="https://www.facebook.com/hemanth.telukuntla.96/"
                             className="p-2 border-2 rounded-full hover:bg-primary hover:text-white transition-colors inline-block"
                           >
                             <Facebook className="h-6 w-6 text-primary hover:text-white" />
