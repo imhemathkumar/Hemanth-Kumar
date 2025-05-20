@@ -33,21 +33,21 @@ export default function AnimatedBackground() {
 
     const initParticles = () => {
       particles = []
-      // Reduced particle count for better visibility
-      const particleCount = Math.floor(window.innerWidth / 30)
+      // Reduced particle count for better performance
+      const particleCount = Math.min(Math.floor(window.innerWidth / 60), 30)
 
       for (let i = 0; i < particleCount; i++) {
         // Increased particle size for better visibility
-        const radius = Math.random() * 3 + 1.5
+        const radius = Math.random() * 2 + 1
         particles.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
           radius,
           color: getRandomColor(),
-          speedX: (Math.random() - 0.5) * 0.3,
-          speedY: (Math.random() - 0.5) * 0.3,
+          speedX: (Math.random() - 0.5) * 0.2,
+          speedY: (Math.random() - 0.5) * 0.2,
           // Increased base opacity for better visibility
-          opacity: Math.random() * 0.6 + 0.3,
+          opacity: Math.random() * 0.5 + 0.2,
         })
       }
     }
@@ -90,24 +90,24 @@ export default function AnimatedBackground() {
         }
       })
 
-      // Connect particles with lines if they're close enough
+      // Connect particles with lines if they're close enough - limit connections for performance
       for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
+        for (let j = i + 1; j < Math.min(i + 5, particles.length); j++) {
           const dx = particles[i].x - particles[j].x
           const dy = particles[i].y - particles[j].y
           const distance = Math.sqrt(dx * dx + dy * dy)
 
           // Increased connection distance for more visible connections
-          if (distance < 150) {
+          if (distance < 120) {
             ctx.beginPath()
             // Enhanced line visibility
             const isDark = theme === "dark"
             const grayValue = isDark ? 200 : 50
             // Increased line opacity and made it more visible at greater distances
-            const lineOpacity = 0.3 * (1 - distance / 150)
+            const lineOpacity = 0.2 * (1 - distance / 120)
             ctx.strokeStyle = `rgba(${grayValue}, ${grayValue}, ${grayValue}, ${lineOpacity})`
             // Increased line width for better visibility
-            ctx.lineWidth = 0.8
+            ctx.lineWidth = 0.5
             ctx.moveTo(particles[i].x, particles[i].y)
             ctx.lineTo(particles[j].x, particles[j].y)
             ctx.stroke()
@@ -133,7 +133,7 @@ export default function AnimatedBackground() {
       ref={canvasRef}
       className="fixed inset-0 w-full h-full -z-10 pointer-events-none"
       // Increased opacity for better visibility and removed grayscale filter
-      style={{ opacity: 0.7 }}
+      style={{ opacity: 0.5 }}
     />
   )
 }
