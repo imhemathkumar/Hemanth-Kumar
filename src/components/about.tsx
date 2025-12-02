@@ -28,7 +28,7 @@ export default function About() {
   }
 const aboutContent = {
     title: "About Me",
-    description: `I’m currently in my 3rd year of a B.E./B.Tech program and I’m a passionate web developer based in Chennai🌴. My main technical skills include Java, Python, C/C++, React, Next.js, Node.js, and MongoDB, which I leverage to create scalable and user-friendly🕊️web applications.`,
+    description: `I’m currently in my 4th year of a B.E./B.Tech program and I’m a passionate web developer based in Chennai🌴. My main technical skills include Java, Python, C/C++, React, Next.js, Node.js, and MongoDB, which I leverage to create scalable and user-friendly🕊️web applications.`,
     location: "Chennai",
     additionalInfo: `Web development and design are not only my areas of expertise but also my true passion💓. I take great pride in crafting functional and visually appealing digital💡solutions. When I’m not coding, I enjoy 🤸 playing cricket and kabaddi, listening to music🎧, and engaging in creative challenges.`
   }
