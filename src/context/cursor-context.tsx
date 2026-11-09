@@ -1,6 +1,12 @@
+
 "use client"
 
-import React, { createContext, useContext, useState, useEffect } from "react"
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+} from "react"
 
 interface Position {
   x: number
@@ -15,7 +21,11 @@ interface ElementDimensions {
 
 interface CursorContextType {
   cursorType: "default" | "link" | "button" | "interactive" | "hidden"
-  setCursorType: React.Dispatch<React.SetStateAction<"default" | "link" | "button" | "interactive" | "hidden">>
+  setCursorType: React.Dispatch<
+    React.SetStateAction<
+      "default" | "link" | "button" | "interactive" | "hidden"
+    >
+  >
   isHovering: boolean
   setIsHovering: (isHovering: boolean) => void
   isInverted: boolean
@@ -25,137 +35,182 @@ interface CursorContextType {
   isClicking: boolean
   setIsClicking: (isClicking: boolean) => void
   hoveredElementDimensions: ElementDimensions | null
-  setHoveredElementDimensions: (dimensions: ElementDimensions | null) => void
+  setHoveredElementDimensions: (
+    dimensions: ElementDimensions | null
+  ) => void
 }
 
-const CursorContext = createContext<CursorContextType | undefined>(undefined)
+const CursorContext = createContext<CursorContextType | undefined>(
+  undefined
+)
 
-export function CursorProvider({ children }: { children: React.ReactNode }) {
-  const [cursorType, setCursorType] = useState<"default" | "link" | "button" | "interactive" | "hidden">("default")
+export function CursorProvider({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  const [cursorType, setCursorType] = useState<
+    "default" | "link" | "button" | "interactive" | "hidden"
+  >("default")
+
   const [isHovering, setIsHovering] = useState(false)
   const [isInverted, setIsInverted] = useState(false)
   const [isTouchDevice, setIsTouchDevice] = useState(false)
-  const [magneticTarget, setMagneticTarget] = useState<Position | null>(null)
+  const [magneticTarget, setMagneticTarget] =
+    useState<Position | null>(null)
   const [isClicking, setIsClicking] = useState(false)
-  const [hoveredElementDimensions, setHoveredElementDimensions] = useState<ElementDimensions | null>(null)
 
+  const [hoveredElementDimensions, setHoveredElementDimensions] =
+    useState<ElementDimensions | null>(null)
+
+  // Detect devices that support a mouse or trackpad.
   useEffect(() => {
+    const mediaQuery = window.matchMedia(
+      "(hover: hover) and (pointer: fine)"
+    )
+
     const checkTouch = () => {
-      setIsTouchDevice(window.matchMedia("(hover: none)").matches)
+      setIsTouchDevice(!mediaQuery.matches)
     }
 
     checkTouch()
-    window.addEventListener("resize", checkTouch)
+    mediaQuery.addEventListener("change", checkTouch)
+
+    return () => {
+      mediaQuery.removeEventListener("change", checkTouch)
+    }
+  }, [])
+
+  // Hide native cursor and handle clicks.
+  useEffect(() => {
+    if (isTouchDevice) {
+      document.body.classList.remove("cursor-none")
+      return
+    }
+
+    document.body.classList.add("cursor-none")
 
     const handleMouseDown = () => setIsClicking(true)
     const handleMouseUp = () => setIsClicking(false)
 
-    if (!isTouchDevice) {
-      document.addEventListener("mousedown", handleMouseDown)
-      document.addEventListener("mouseup", handleMouseUp)
-    }
-
-    if (!isTouchDevice) {
-      document.body.classList.add("cursor-none")
-    } else {
-      document.body.classList.remove("cursor-none")
-    }
+    document.addEventListener("mousedown", handleMouseDown)
+    document.addEventListener("mouseup", handleMouseUp)
+    window.addEventListener("blur", handleMouseUp)
 
     return () => {
-      window.removeEventListener("resize", checkTouch)
+      document.body.classList.remove("cursor-none")
       document.removeEventListener("mousedown", handleMouseDown)
       document.removeEventListener("mouseup", handleMouseUp)
-      document.body.classList.remove("cursor-none")
+      window.removeEventListener("blur", handleMouseUp)
     }
   }, [isTouchDevice])
 
+  // Detect interactive and magnetic elements.
   useEffect(() => {
     if (isTouchDevice) return
 
-    let isMouseInWindow = true
+    const interactiveSelector = [
+      "a",
+      "button",
+      '[role="button"]',
+      ".interactive",
+      "[data-interactive]",
+      ".magnetic-element",
+      ".btn",
+      ".card",
+      ".badge",
+      "input",
+      "select",
+      "textarea",
+    ].join(",")
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (!e.target || !isMouseInWindow) return
+      const target = e.target
 
-      const target = e.target as HTMLElement
+      if (!(target instanceof HTMLElement)) return
 
-      const shouldHideCursor =
-        target.hasAttribute("data-hide-cursor") ||
-        target.closest("[data-hide-cursor]")
+      // Elements that explicitly hide the custom cursor.
+      const hiddenElement = target.closest("[data-hide-cursor]")
 
-      if (shouldHideCursor) {
+      if (hiddenElement) {
         setIsHovering(false)
         setIsInverted(false)
         setCursorType("hidden")
         setHoveredElementDimensions(null)
+        setMagneticTarget(null)
         return
       }
 
-      const isInteractive =
-        target.tagName === "A" ||
-        target.tagName === "BUTTON" ||
-        target.closest("a") ||
-        target.closest("button") ||
-        target.getAttribute("role") === "button" ||
-        target.classList.contains("interactive") ||
-        target.closest(".interactive") ||
-        target.hasAttribute("data-interactive") ||
-        target.closest("[data-interactive]") ||
-        target.classList.contains("magnetic-element") ||
-        target.closest(".magnetic-element") ||
-        target.classList.contains("btn") ||
-        target.closest(".btn") ||
-        target.tagName === "INPUT" ||
-        target.tagName === "SELECT" ||
-        target.tagName === "TEXTAREA" ||
-        target.classList.contains("card") ||
-        target.closest(".card") ||
-        target.classList.contains("badge") ||
-        target.closest(".badge")
+      // Find the nearest interactive element.
+      const interactiveElement = target.closest(
+        interactiveSelector
+      ) as HTMLElement | null
 
-      if (isInteractive) {
-        setIsHovering(true)
-        setIsInverted(true)
-
-        const interactiveElement =
-          target.classList.contains("interactive") || target.tagName === "A" || target.tagName === "BUTTON"
-            ? target
-            : target.closest(".interactive") ||
-              target.closest("a") ||
-              target.closest("button") ||
-              target.closest("[data-interactive]") ||
-              target.closest(".magnetic-element") ||
-              target.closest(".card") ||
-              target.closest(".btn")
-
-        if (interactiveElement) {
-          const styles = window.getComputedStyle(interactiveElement)
-          const rect = interactiveElement.getBoundingClientRect()
-
-          setHoveredElementDimensions({
-            width: rect.width,
-            height: rect.height,
-            borderRadius: styles.borderRadius,
-          })
-
-          if (interactiveElement.tagName === "A" || interactiveElement.closest("a")) {
-            setCursorType("link")
-          } else if (interactiveElement.tagName === "BUTTON" || interactiveElement.closest("button")) {
-            setCursorType("button")
-          } else {
-            setCursorType("interactive")
-          }
-        }
-      } else if (!target.classList.contains("magnetic-element") && !target.closest(".magnetic-element")) {
+      if (!interactiveElement) {
         setIsHovering(false)
         setIsInverted(false)
         setCursorType("default")
         setHoveredElementDimensions(null)
+        setMagneticTarget(null)
+        return
+      }
+
+      setIsHovering(true)
+      setIsInverted(true)
+
+      // Get dimensions for cursor expansion.
+      const rect = interactiveElement.getBoundingClientRect()
+      const styles = window.getComputedStyle(interactiveElement)
+
+      setHoveredElementDimensions({
+        width: rect.width,
+        height: rect.height,
+        borderRadius: styles.borderRadius,
+      })
+
+      // Determine cursor type.
+      if (
+        interactiveElement.tagName === "A" ||
+        interactiveElement.closest("a")
+      ) {
+        setCursorType("link")
+      } else if (
+        interactiveElement.tagName === "BUTTON" ||
+        interactiveElement.closest("button")
+      ) {
+        setCursorType("button")
+      } else {
+        setCursorType("interactive")
+      }
+
+      // ACTUAL MAGNETIC CURSOR CALCULATION.
+      const magneticElement = target.closest(
+        ".magnetic-element"
+      ) as HTMLElement | null
+
+      if (magneticElement) {
+        const magneticRect =
+          magneticElement.getBoundingClientRect()
+
+        const centerX =
+          magneticRect.left + magneticRect.width / 2
+
+        const centerY =
+          magneticRect.top + magneticRect.height / 2
+
+        // Magnetic strength: 25%.
+        const strength = 0.25
+
+        setMagneticTarget({
+          x: centerX + (e.clientX - centerX) * strength,
+          y: centerY + (e.clientY - centerY) * strength,
+        })
+      } else {
+        setMagneticTarget(null)
       }
     }
 
     const handleMouseLeave = () => {
-      isMouseInWindow = false
       setIsHovering(false)
       setIsInverted(false)
       setCursorType("default")
@@ -163,18 +218,12 @@ export function CursorProvider({ children }: { children: React.ReactNode }) {
       setHoveredElementDimensions(null)
     }
 
-    const handleMouseEnter = () => {
-      isMouseInWindow = true
-    }
-
     window.addEventListener("mousemove", handleMouseMove)
     document.addEventListener("mouseleave", handleMouseLeave)
-    document.addEventListener("mouseenter", handleMouseEnter)
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove)
       document.removeEventListener("mouseleave", handleMouseLeave)
-      document.removeEventListener("mouseenter", handleMouseEnter)
     }
   }, [isTouchDevice])
 
@@ -202,8 +251,12 @@ export function CursorProvider({ children }: { children: React.ReactNode }) {
 
 export function useCursor() {
   const context = useContext(CursorContext)
+
   if (context === undefined) {
-    throw new Error("useCursor must be used within a CursorProvider")
+    throw new Error(
+      "useCursor must be used within a CursorProvider"
+    )
   }
+
   return context
 }
