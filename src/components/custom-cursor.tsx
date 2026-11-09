@@ -1,11 +1,14 @@
+
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { motion, useSpring } from "framer-motion"
 import { useCursor } from "@/context/cursor-context"
+import { useTheme } from "next-themes"
 
 export default function CustomCursor() {
   const {
+    cursorType,
     isHovering,
     isInverted,
     magneticTarget,
@@ -13,105 +16,95 @@ export default function CustomCursor() {
     hoveredElementDimensions,
   } = useCursor()
 
-  const [isEnabled, setIsEnabled] = useState(false)
+  const mousePositionRef = useRef({ x: 0, y: 0 })
+  const [isTouchDevice, setIsTouchDevice] = useState(false)
+  const { theme } = useTheme()
+  const cursorRef = useRef<HTMLDivElement>(null)
+  const dotRef = useRef<HTMLDivElement>(null)
+
   const [isVisible, setIsVisible] = useState(false)
   const [dotSize, setDotSize] = useState(3)
 
-  const springConfig = {
-    damping: 20,
-    stiffness: 350,
-    mass: 0.25,
-  }
+  const springConfig = { damping: 15, stiffness: 400, mass: 0.3 }
 
   const x = useSpring(0, springConfig)
   const y = useSpring(0, springConfig)
-
-  const scale = useSpring(1, { damping: 12, stiffness: 300 })
+  const scale = useSpring(1, { damping: 10, stiffness: 300 })
   const dotScale = useSpring(1, { damping: 15, stiffness: 400 })
-  const width = useSpring(30, { damping: 15, stiffness: 250 })
-  const height = useSpring(30, { damping: 15, stiffness: 250 })
-  const borderRadius = useSpring("50%", {
-    damping: 15,
-    stiffness: 250,
-  })
+  const width = useSpring(30, { damping: 10, stiffness: 300 })
+  const height = useSpring(30, { damping: 10, stiffness: 300 })
+  const borderRadius = useSpring("50%", { damping: 10, stiffness: 300 })
 
-  // Enable the custom cursor only on devices with a fine pointer.
+  // Detect mouse / touch device
   useEffect(() => {
     const mediaQuery = window.matchMedia(
-      "(hover: hover) and (pointer: fine)"
+      "(hover: none), (pointer: coarse)"
     )
 
-    const updateDevice = () => {
-      setIsEnabled(mediaQuery.matches)
+    const checkTouch = () => {
+      setIsTouchDevice(
+        mediaQuery.matches ||
+        navigator.maxTouchPoints > 0
+      )
     }
 
-    updateDevice()
-    mediaQuery.addEventListener("change", updateDevice)
+    checkTouch()
+    mediaQuery.addEventListener("change", checkTouch)
 
     return () => {
-      mediaQuery.removeEventListener("change", updateDevice)
+      mediaQuery.removeEventListener("change", checkTouch)
     }
   }, [])
 
-  // Hide the native cursor only when the custom cursor is enabled.
+  // Dot size (avoid accessing window during server rendering)
   useEffect(() => {
-    if (!isEnabled) return
-
-    document.documentElement.classList.add("custom-cursor-enabled")
-
-    return () => {
-      document.documentElement.classList.remove("custom-cursor-enabled")
-    }
-  }, [isEnabled])
-
-  // Set cursor size after mounting (safe for Next.js SSR).
-  useEffect(() => {
-    const updateSize = () => {
+    const updateDotSize = () => {
       setDotSize(Math.max(2, Math.min(window.innerWidth / 640, 4)))
     }
 
-    updateSize()
-    window.addEventListener("resize", updateSize)
+    updateDotSize()
+    window.addEventListener("resize", updateDotSize)
 
-    return () => window.removeEventListener("resize", updateSize)
+    return () => window.removeEventListener("resize", updateDotSize)
   }, [])
 
-  // Track mouse movement.
+  // Mouse tracking
   useEffect(() => {
-    if (!isEnabled) return
+    if (isTouchDevice) return
 
-    const handleMouseMove = (event: MouseEvent) => {
-      if (!magneticTarget) {
-        x.set(event.clientX)
-        y.set(event.clientY)
+    const initCursor = (e: MouseEvent) => {
+      mousePositionRef.current = {
+        x: e.clientX,
+        y: e.clientY,
       }
 
+      x.set(e.clientX)
+      y.set(e.clientY)
       setIsVisible(true)
     }
 
-    const handleMouseLeave = () => setIsVisible(false)
-    const handleMouseEnter = () => setIsVisible(true)
+    const updateMousePosition = (e: MouseEvent) => {
+      mousePositionRef.current = {
+        x: e.clientX,
+        y: e.clientY,
+      }
 
-    document.addEventListener("mousemove", handleMouseMove)
-    document.addEventListener("mouseleave", handleMouseLeave)
-    document.addEventListener("mouseenter", handleMouseEnter)
+      if (!magneticTarget) {
+        x.set(e.clientX)
+        y.set(e.clientY)
+      }
+    }
+
+    document.addEventListener("mousemove", updateMousePosition)
+    document.addEventListener("mousemove", initCursor, { once: true })
 
     return () => {
-      document.removeEventListener("mousemove", handleMouseMove)
-      document.removeEventListener("mouseleave", handleMouseLeave)
-      document.removeEventListener("mouseenter", handleMouseEnter)
+      document.removeEventListener("mousemove", updateMousePosition)
+      document.removeEventListener("mousemove", initCursor)
     }
-  }, [isEnabled, magneticTarget, x, y])
+  }, [isTouchDevice, magneticTarget, x, y])
 
-  // Follow the magnetic target.
-  useEffect(() => {
-    if (!isEnabled || !magneticTarget) return
-
-    x.set(magneticTarget.x)
-    y.set(magneticTarget.y)
-  }, [isEnabled, magneticTarget, x, y])
-
-  // Expand cursor when hovering over interactive elements.
+  // Hover expansion
   useEffect(() => {
     if (isHovering && hoveredElementDimensions) {
       const {
@@ -122,7 +115,7 @@ export default function CustomCursor() {
 
       width.set(elementWidth + 4)
       height.set(elementHeight + 4)
-      borderRadius.set(elementBorderRadius || "12px")
+      borderRadius.set(elementBorderRadius)
       dotScale.set(0.5)
     } else {
       width.set(30)
@@ -130,104 +123,143 @@ export default function CustomCursor() {
       borderRadius.set("50%")
       dotScale.set(1)
     }
+
+    if (isClicking) {
+      scale.set(0.9)
+
+      const timeout = window.setTimeout(() => {
+        if (!isHovering) scale.set(1)
+      }, 150)
+
+      return () => window.clearTimeout(timeout)
+    } else {
+      scale.set(1)
+    }
   }, [
     isHovering,
+    isClicking,
     hoveredElementDimensions,
     width,
     height,
     borderRadius,
+    scale,
     dotScale,
   ])
 
-  // Click animation.
+  // Magnetic cursor movement
   useEffect(() => {
-    if (isClicking) {
-      scale.set(0.85)
-      const timeout = window.setTimeout(() => {
-        scale.set(1)
-      }, 120)
+    if (magneticTarget) {
+      x.set(magneticTarget.x)
+      y.set(magneticTarget.y)
+    }
+  }, [magneticTarget, x, y])
 
-      return () => window.clearTimeout(timeout)
+  // Mouse entering / leaving viewport
+  useEffect(() => {
+    if (isTouchDevice) return
+
+    const handleMouseLeave = () => setIsVisible(false)
+    const handleMouseEnter = () => setIsVisible(true)
+
+    document.addEventListener("mouseleave", handleMouseLeave)
+    document.addEventListener("mouseenter", handleMouseEnter)
+
+    return () => {
+      document.removeEventListener("mouseleave", handleMouseLeave)
+      document.removeEventListener("mouseenter", handleMouseEnter)
+    }
+  }, [isTouchDevice])
+
+  // Default cursor elements
+  useEffect(() => {
+    if (isTouchDevice) return
+
+    const handleMouseOver = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null
+
+      const defaultCursor = target?.closest(
+        '[data-custom-cursor="default"]'
+      )
+
+      setIsVisible(!defaultCursor)
     }
 
-    scale.set(1)
-  }, [isClicking, scale])
+    document.addEventListener("mouseover", handleMouseOver)
 
-  if (!isEnabled) return null
+    return () => {
+      document.removeEventListener("mouseover", handleMouseOver)
+    }
+  }, [isTouchDevice])
 
-  const cursorColor = isInverted ? "#ffffff" : "#ffffff"
+  if (isTouchDevice) return null
 
   return (
     <>
-      {/* Main magnetic / inverted cursor */}
+      {/* Main dynamic cursor */}
       <motion.div
-        className="custom-main-cursor"
+        ref={cursorRef}
+        className="fixed pointer-events-none z-[99999]"
         initial={{ opacity: 0 }}
         animate={{ opacity: isVisible ? 1 : 0 }}
         style={{
-          position: "fixed",
+          width,
+          height,
+          backgroundColor: "white",
+          boxShadow: isInverted
+            ? "none"
+            : "0 0 10px rgba(255, 255, 255, 0.3)",
+          mixBlendMode: isInverted ? "difference" : "normal",
+          borderRadius,
           left: 0,
           top: 0,
           x,
           y,
           translateX: "-50%",
           translateY: "-50%",
-          width,
-          height,
           scale,
-          borderRadius,
-          backgroundColor: cursorColor,
-          mixBlendMode: isInverted ? "difference" : "normal",
-          pointerEvents: "none",
-          zIndex: 2147483647,
-          boxShadow: isInverted
-            ? "none"
-            : "0 0 12px rgba(255,255,255,0.25)",
         }}
       />
 
       {/* Precision dot */}
       <motion.div
+        ref={dotRef}
+        className="fixed pointer-events-none z-[99999]"
         initial={{ opacity: 0 }}
         animate={{ opacity: isVisible ? 1 : 0 }}
         style={{
-          position: "fixed",
+          width: `${dotSize}px`,
+          height: `${dotSize}px`,
+          borderRadius: "50%",
+          backgroundColor: theme === "dark" ? "white" : "black",
           left: 0,
           top: 0,
           x,
           y,
           translateX: "-50%",
           translateY: "-50%",
-          width: dotSize,
-          height: dotSize,
-          borderRadius: "50%",
-          backgroundColor: "#ffffff",
           scale: dotScale,
-          pointerEvents: "none",
-          zIndex: 2147483647,
         }}
       />
 
-      {/* Click ripple */}
+      {/* Click animation effect */}
       {isClicking && isVisible && (
         <motion.div
+          className="fixed pointer-events-none z-[99999]"
           initial={{ scale: 0.5, opacity: 0.8 }}
-          animate={{ scale: 1.8, opacity: 0 }}
-          transition={{ duration: 0.45 }}
+          animate={{ scale: 1.5, opacity: 0 }}
+          transition={{ duration: 0.5 }}
           style={{
-            position: "fixed",
+            width,
+            height,
+            borderRadius,
+            border: "2px solid white",
+            mixBlendMode: "difference",
             left: 0,
             top: 0,
             x,
             y,
             translateX: "-50%",
             translateY: "-50%",
-            width: 35,
-            height: 35,
-            borderRadius: "50%",
-            border: "2px solid white",
-            pointerEvents: "none",
-            zIndex: 2147483646,
           }}
         />
       )}
