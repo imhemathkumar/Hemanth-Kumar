@@ -130,28 +130,6 @@ export default function Projects() {
       category: "ai",
     },
     {
-      id: "trustcert",
-      title: "TrustCert",
-      description: "Web application for certificate generation",
-      longDescription: "Web application for online certificate generation and validation. Streamline the process of creating, issuing, and verifying digital certificates with enhanced security features.",
-      image: "/images/Trustcert.png",
-      bgColor: {
-        dark: "from-purple-500/70 to-purple-800/90",
-        light: "from-purple-300/70 to-purple-500/90",
-      },
-      technologies: [
-        { name: "React" },
-        { name: "Vite" },
-        { name: "Node.js" },
-        { name: "JavaScript" },
-        { name: "Cryptography" }
-      ],
-      demoUrl: "https://github.com/imhemathkumar/TrustCert",
-      githubUrl: "https://github.com/imhemathkumar/TrustCert",
-      category: ["security", "blockchain"],
-
-    },
-    {
       id: "selinux-policy",
       title: "SELinux Policy For System Security Enforcement",
       description: "SELinux Policy for System Security Enforcement",
