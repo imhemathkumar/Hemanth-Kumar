@@ -174,7 +174,7 @@ export default function Projects() {
   title: "AI-Powered IVR Assistant",
   description: "An AI-Powered IVR System with Intelligent Escalation Logic",
   longDescription: "An AI-Powered IVR Assistant that automates customer support through speech recognition, multilingual processing, and NLP-based intent detection. It uses a BERT intent classification model to handle customer queries and integrates the OpenAI API (GPT-4o-mini) as an AI agent for intelligent escalation when complex queries require advanced assistance. The system also supports voice responses, automated ticket management, and conversation logging.",
-  image: "/images/ai-ivr.png",
+  image: "/images/my.png",
   bgColor: {
     dark: "from-purple-500/70 to-purple-900/90",
     light: "from-purple-300/70 to-purple-600/90",
